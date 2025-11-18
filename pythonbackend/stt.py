@@ -12,7 +12,7 @@ CHUNK_SAMPLES = int(SAMPLE_RATE * CHUNK_MS / 1000)
 
 AUDIO_DEVICE = None
 LANGUAGE = None
-MODEL_NAME = "large-v3"
+MODEL_NAME = "distil-large-v3"
 
 
 whisper_model = WhisperModel(
