@@ -1,2 +1,4 @@
 venv/
 modelTraining/
+data/
+__pycache__/
