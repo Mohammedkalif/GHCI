@@ -4,7 +4,7 @@ from TTS.api import TTS
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
-print("Loading Whisper distil-large-v3...")
+print("Loading Whisper large-v3...")
 whisper = WhisperModel(
     "large-v3",
     device=device,
