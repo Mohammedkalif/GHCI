@@ -1,0 +1,12 @@
+User Inputs (Raw Inputs)
+
+These are the only values the user must provide for prediction:
+
+Input Name	Type	Description
+type	string	Transaction type (e.g., "PAYMENT", "TRANSFER", "CASH_OUT", "DEBIT", "CASH_IN")
+amount	float	Amount involved in the transaction
+oldbalanceOrg	float	Sender’s account balance before the transaction
+newbalanceOrig	float	Sender’s account balance after the transaction
+oldbalanceDest	float	Receiver’s balance before receiving the amount
+newbalanceDest	float	Receiver’s balance after receiving the amount
+time (HH:MM)	string	Actual transaction time (used to determine odd-hour). You no longer use step.
