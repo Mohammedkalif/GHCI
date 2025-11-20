@@ -1,20 +1,3 @@
-#!/usr/bin/env python3
-"""
-Auto Enrollment + Verification pipeline (single file)
-
-- Auto-enroll: collects N face embeddings across frames/angles, then saves them.
-- Verify: computes centroid embedding from enrolled set and compares incoming frame embeddings.
-- Draws bbox + matching percentage on camera in real-time.
-
-Requirements (you already installed):
- - insightface
- - opencv-python
- - joblib
- - numpy
-
-Run: python face_verif_pipeline.py
-"""
-
 import time
 import cv2
 import numpy as np
@@ -23,19 +6,17 @@ from insightface.app import FaceAnalysis
 from collections import defaultdict
 
 # ---------- CONFIG ----------
-DB_PATH = "face_db.joblib"           # saved embeddings (dict: acc -> list of embeddings)
-MODEL_NAME = "buffalo_s"             # lightweight; alternatives: buffalo_l, antelopev2 (if you want)
-CTX_ID = 0                           # GPU=0, CPU=-1 (use -1 if no GPU)
+DB_PATH = "face_db.joblib"
+MODEL_NAME = "buffalo_s"
+CTX_ID = 0
 DET_SIZE = (640, 640)
 
-AUTO_ENROLL_SAMPLES = 30             # how many good face samples to collect before finishing enrollment
-MIN_DET_CONFIDENCE = 0.4            # minimal detection score to accept a face sample
-SIMILARITY_THRESHOLD = 0.55         # cosine similarity threshold for a "match" (tune for your env)
-VERIFICATION_MAX_TRIES = 200        # max frames to wait during verification
+AUTO_ENROLL_SAMPLES = 30
+MIN_DET_CONFIDENCE = 0.4
+SIMILARITY_THRESHOLD = 0.55
+VERIFICATION_MAX_TRIES = 200
 
-SAVE_AFTER_ENROLL = True            # persist to joblib after enrollment
-
-# If you want to use your SQL logger from db.py, set True and configure the module (optional)
+SAVE_AFTER_ENROLL = True
 USE_DB_LOGGER = False
 
 # ---------- Optional DB logger (your previous project had a db.py with FaceDBLoggerSQL) ----------
@@ -91,10 +72,6 @@ face_db = load_db(DB_PATH)   # dict: account -> list of embeddings (np arrays)
 
 # ---------- Enrollment ----------
 def auto_enroll(account_number: str, target_samples=AUTO_ENROLL_SAMPLES, show_feedback=True):
-    """
-    Auto-enroll: collects embeddings across frames. Does not close until target_samples collected.
-    Stores list of embeddings per account in face_db (and optionally saves to disk).
-    """
     if account_number in face_db:
         print(f"[WARN] Account {account_number} already in DB. New embeddings will be appended.")
 

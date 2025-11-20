@@ -1,98 +1,150 @@
+from fastapi import FastAPI
+from pydantic import BaseModel
 import joblib
 import numpy as np
 import pandas as pd
 import xgboost as xgb
-from datetime import datetime
 
+# ============================================================
+# LOAD MODEL + ENCODER
+# ============================================================
 MODEL_PATH = "/mnt/D/GHCI-25/pythonbackend/models/fraud_model.joblib"
+ENC_PATH   = "/mnt/D/GHCI-25/pythonbackend/models/encoder.joblib"
+
 model = joblib.load(MODEL_PATH)
-le = joblib.load("/mnt/D/GHCI-25/pythonbackend/models/encoder.joblib")
+encoder = joblib.load(ENC_PATH)
+
+# Force CPU to remove CUDA warning
+model.get_booster().set_param({"device": "cpu"})
+
+# ============================================================
+# FASTAPI APP
+# ============================================================
+app = FastAPI(title="Fraud Detection API", version="1.0")
+
+# ============================================================
+# INPUT FORMAT (ONLY BASIC FIELDS)
+# ============================================================
+class TxInput(BaseModel):
+    type: str
+    amount: float
+    oldbalanceOrg: float
+    newbalanceOrig: float
+    oldbalanceDest: float
+    newbalanceDest: float
+    step: int    # Required for odd_hour
 
 
-def preprocess_transaction(tx):
+# ============================================================
+# PREPROCESSING
+# ============================================================
+SUP_COLS = [
+    "type","amount","oldbalanceOrg","newbalanceOrig",
+    "oldbalanceDest","newbalanceDest","balanceOrgDiff",
+    "balanceDestDiff","is_risky_type","odd_hour",
+    "amountOverBalance","inconsistent"
+]
 
+def preprocess(tx: dict):
     df = pd.DataFrame([tx])
-    df["type"] = le.transform(df["type"])
-    df["balanceOrgDiff"] = df["amount"]
-    df["balanceDestDiff"] = df["newbalanceDest"] - df["oldbalanceDest"]
-    df["is_risky_type"] = df["type"].isin([2, 3]).astype(int)
-    hour = pd.to_datetime(df["timestamp"]).dt.hour.iloc[0]
-    df["odd_hour"] = 1 if hour in [0, 1, 2, 3, 4] else 0
-    df["amountOverBalance"] = df.apply(
-        lambda row: row["amount"] / (row["oldbalanceOrg"] + 1)
-        if row["oldbalanceOrg"] > 0 else row["amount"],
-        axis=1
-    )
+
+    df["balanceOrgDiff"] = df["oldbalanceOrg"] - df["newbalanceOrig"]
+    df["balanceDestDiff"] = df["oldbalanceDest"] - df["newbalanceDest"]
+    df["dest_zero_before"] = (df["oldbalanceDest"] == 0).astype(int)
+    df["is_risky_type"] = df["type"].isin(["TRANSFER", "CASH_OUT"]).astype(int)
+
+    # --- NEW: odd hour from timestamp ---
+    hour = tx["timestamp"].hour
+    df["odd_hour"] = int(hour in [1, 2, 3, 4])
+
+    df["amountOverBalance"] = df["amount"] / (df["oldbalanceOrg"] + 1)
     df["inconsistent"] = (
-        ((df["oldbalanceOrg"] == 0) & (df["newbalanceOrig"] == 0) & (df["amount"] > 0))
-        |
-        ((df["oldbalanceDest"] == 0) & (df["newbalanceDest"] == 0) & (df["amount"] > 0))
+        (df["oldbalanceOrg"] - df["amount"]) != df["newbalanceOrig"]
     ).astype(int)
-    df = df.drop(columns=["timestamp"])
 
-    return df
+    # Encode categorical type
+    df["type"] = encoder.transform(df["type"])
+
+    return df[SUP_COLS]
 
 
+# ============================================================
+# EXPLANATION LABELS
+# ============================================================
 EXPLANATION = {
-    "odd_hour": "Transaction at unusual time (midnight–4 AM)",
-    "is_risky_type": "Risky transaction type (Transfer / Cash-out)",
-    "amountOverBalance": "Amount unusually large compared to balance",
-    "inconsistent": "Balance change inconsistent with transaction",
-    "balanceOrgDiff": "Sender balance drops unusually",
-    "balanceDestDiff": "Receiver balance changes unexpectedly",
-    "type": "Suspicious transaction type",
-    "amount": "Large transaction amount"
+    "type": "Risky transaction type",
+    "amount": "Unusually large transaction",
+    "oldbalanceOrg": "Suspicious sender balance",
+    "newbalanceOrig": "Unexpected sender ending balance",
+    "oldbalanceDest": "Unusual receiver opening balance",
+    "newbalanceDest": "Unexpected receiver ending balance",
+    "balanceOrgDiff": "Sudden drop in sender balance",
+    "balanceDestDiff": "Sudden increase in receiver balance",
+    "is_risky_type": "High-risk transaction type",
+    "odd_hour": "Performed during suspicious night hours",
+    "amountOverBalance": "Amount too high relative to balance",
+    "inconsistent": "Balance does not match amount transferred",
 }
 
 
-def predict_fraud(tx_dict):
+# ============================================================
+# SUPERVISED PREDICTOR
+# ============================================================
+def model_predict(df_sup):
+    prob = model.predict_proba(df_sup)[0][1]
+    flag = int(prob > 0.50)
 
-    processed = preprocess_transaction(tx_dict)
-
-    prob = model.predict_proba(processed)[0][1]
-    is_fraud = int(prob > 0.5)
-
-    dmat = xgb.DMatrix(
-        processed.values,
-        feature_names=list(processed.columns)
-    )
-
+    # SHAP-like explanation
     booster = model.get_booster()
-    shap_values = booster.predict(dmat, pred_contribs=True)[0][:-1]
+    dmat = xgb.DMatrix(df_sup.values, feature_names=df_sup.columns.tolist())
+    shap_vals = booster.predict(dmat, pred_contribs=True)[0][:-1]
 
-    feature_names = list(processed.columns)
-    contrib_list = sorted(
-        zip(feature_names, shap_values),
+    features = df_sup.columns.tolist()
+    ranked = sorted(
+        zip(features, shap_vals),
         key=lambda x: abs(x[1]),
         reverse=True
     )
 
-    top_reasons = contrib_list[:5]
+    top_reasons = [
+        {
+            "feature": fname,
+            "reason": EXPLANATION.get(fname, fname),
+            "impact": float(val)
+        }
+        for fname, val in ranked[:5]
+    ]
+
+    return prob, flag, top_reasons
+
+
+# ============================================================
+# API ENDPOINT
+# ============================================================
+@app.post("/predict")
+def predict(tx: TxInput):
+    tx_dict = tx.dict()
+
+    df_sup = preprocess(tx_dict)
+    prob, flag, reasons = model_predict(df_sup)
 
     return {
-        "fraud_probability": float(prob),
-        "fraud_prediction": is_fraud,
-        "top_reasons": top_reasons
+        "final_prediction": "FRAUD" if flag else "LEGIT",
+        "probability": prob,
+        "flag": flag,
+        "explanations": reasons
     }
 
-
-sample_tx = {
-    "type": "CASH_IN",
-    "amount": 1871553.73,
-    "oldbalanceOrg": 1871553.73,
-    "newbalanceOrig": 0.0,
-    "oldbalanceDest": 0.0,
-    "newbalanceDest": 0.0,
-    "timestamp": "2024-02-01 14:32:00"
+"""The json input format for testing the /predict endpoint:
+{
+  "type": "TRANSFER",
+  "amount": 120000,
+  "oldbalanceOrg": 800000,
+  "newbalanceOrig": 680000,
+  "oldbalanceDest": 1000000,
+  "newbalanceDest": 1120000,
+  "step": 125
 }
 
-result = predict_fraud(sample_tx)
-
-print("\n=== Prediction Result ===")
-print("Fraud Probability:", result["fraud_probability"])
-print("Predicted Fraud:", "YES" if result["fraud_prediction"] else "NO")
-
-print("\nTop contributing features:")
-for feature, value in result["top_reasons"]:
-    human = EXPLANATION.get(feature, feature)
-    print(f"{human} → impact: {value:.4f}")
+Endpoint :POST http://localhost:8000/predict
+"""
