@@ -2,3 +2,4 @@ venv/
 modelTraining/
 data/
 __pycache__/
+face_db.joblib
