@@ -1,3 +1,0 @@
-faster-whisper[cuda]==1.0.2
-soundfile
-numpy

@@ -1,0 +1,26 @@
+numpy==1.26.4
+scipy
+pandas
+
+torch==2.3.0+cu121
+torchaudio==2.3.0+cu121
+--extra-index-url https://download.pytorch.org/whl/cu121
+
+soundfile
+sounddevice
+
+speechbrain==0.5.16
+
+google-genai
+langchain-google-genai
+
+langchain
+langgraph
+langchain-community
+
+sqlalchemy
+typing_extensions
+requests
+
+psycopg2
+
