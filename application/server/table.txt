@@ -1,0 +1,197 @@
+{
+  "id": "",
+  "serial_no": "",
+  "name": "",
+  "upi_id": "",
+  "age": 0,
+  "gender": "",
+  "language": "",
+  "phone_no": "",
+  "email": "",
+  "password": "",
+  "address": "",
+  "profile_image": "",
+  "occupation": "",
+  "marital_status": "",
+  "dob": "",
+  "pin_code": "",
+  "is_active": true,
+  "created_at": "",
+  "updated_at": "",
+  "theme": "light",
+  "preferred_language": "",
+  "notification_settings": {
+    "sms": true,
+    "email": true,
+    "push": true
+  },
+
+  "accounts": [
+    {
+      "bank_name": "",
+      "account_details": "",
+      "account_owner": "",
+      "account_branch": "",
+      "account_desc": "",
+      "account_no": "",
+      "balance": 0,
+      "credit_score": 0,
+
+      "account_type": "Savings",
+      "ifsc_code": "",
+      "currency": "INR",
+      "daily_limit": 0,
+      "monthly_limit": 0,
+      "upi_limit": 0,
+      "withdrawal_limit": 0,
+      "transfer_limit": 0,
+
+      "created_on": "",
+      "last_updated": "",
+      "is_account_locked": false,
+      "is_primary_account": false,
+
+      "transactions": [
+        {
+          "id": "",
+          "name": "",
+          "from": "",
+          "to": "",
+          "amount": 0,
+          "status": "",
+          "transactions_id": "",
+          "date": "",
+          "time": "",
+          "sender_details": "",
+
+          "type": "credit",
+          "method": "upi",
+          "description": "",
+          "reference_no": "",
+          "category": "",
+          "receipt_url": "",
+          "is_flagged": false,
+          "created_at": ""
+        }
+      ],
+
+      "my_loan": [
+        {
+          "id": "",
+          "loan_id": "",
+          "loan_name": "",
+          "loan_amount": 0,
+          "percentage_rate": 0,
+          "due_date": "",
+          "balance": 0,
+          "paid": 0,
+          "extras": "",
+          "desc": "",
+
+          "loan_type": "",
+          "emi_amount": 0,
+          "emi_due_day": "",
+          "loan_status": "active",
+          "issued_date": "",
+          "documents": [],
+          "is_defaulted": false,
+          "penalty_amount": 0
+        }
+      ],
+
+      "avail_loan": [
+        {
+          "id": "",
+          "loan_id": "",
+          "loan_name": "",
+          "loan_amount": 0,
+          "percentage_rate": 0,
+          "due_date": "",
+          "balance": 0,
+          "paid": 0,
+          "extras": "",
+          "desc": "",
+
+          "loan_type": "",
+          "emi_amount": 0
+        }
+      ],
+
+      "my_policy": [
+        {
+          "id": "",
+          "policy_id": "",
+          "policy_name": "",
+          "desc": "",
+
+          "policy_type": "",
+          "coverage_amount": 0,
+          "premium_amount": 0,
+          "renewal_date": "",
+          "policy_status": "active",
+          "issued_on": "",
+          "nominee_name": "",
+          "nominee_relation": ""
+        }
+      ],
+
+      "avail_policy": [
+        {
+          "id": "",
+          "policy_id": "",
+          "policy_name": "",
+          "desc": "",
+
+          "policy_type": "",
+          "coverage_amount": 0,
+          "premium_amount": 0
+        }
+      ],
+
+      "is_loan": false,
+      "is_policy": false,
+
+      "my_insurance": [
+        {
+          "id": "",
+          "ins_id": "",
+          "ins_name": "",
+          "desc": "",
+
+          "insurance_type": "",
+          "premium_due_day": "",
+          "claim_status": "",
+          "claim_history": []
+        }
+      ],
+
+      "avail_insurance": [
+        {
+          "id": "",
+          "ins_id": "",
+          "ins_name": "",
+          "desc": "",
+
+          "insurance_type": "",
+          "premium_due_day": ""
+        }
+      ],
+
+      "verification": {
+        "email": false,
+        "phone": false,
+        "face": false,
+        "voice": false,
+        "fingerprint": false,
+        "is_otp": false,
+
+        "kyc_status": "pending",
+        "aadhaar_verified": false,
+        "pan_verified": false,
+        "last_verified_at": "",
+        "login_attempts": 0,
+        "last_login": ""
+      }
+    }
+  ]
+}

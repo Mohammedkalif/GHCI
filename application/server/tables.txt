@@ -1,0 +1,305 @@
+-- USERS TABLE
+CREATE TABLE users (
+    phone_no TEXT NOT NULL,
+    email TEXT NOT NULL,
+    serial_no TEXT,
+    name TEXT,
+    upi_id TEXT,
+    age INT,
+    gender TEXT,
+    language TEXT,
+    password TEXT,
+    address TEXT,
+    profile_image TEXT,
+    occupation TEXT,
+    marital_status TEXT,
+    dob DATE,
+    pin_code TEXT,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP,
+    updated_at TIMESTAMP,
+    theme TEXT DEFAULT 'light',
+    preferred_language TEXT,
+    sms_notifications BOOLEAN DEFAULT TRUE,
+    email_notifications BOOLEAN DEFAULT TRUE,
+    push_notifications BOOLEAN DEFAULT TRUE,
+
+    CONSTRAINT users_pk PRIMARY KEY (phone_no, email)
+);
+
+----------------------------------------------------------
+-- ACCOUNTS TABLE (linked using phone_no + email)
+----------------------------------------------------------
+CREATE TABLE accounts (
+    account_no TEXT PRIMARY KEY,
+    phone_no TEXT NOT NULL,
+    email TEXT NOT NULL,
+
+    bank_name TEXT,
+    account_details TEXT,
+    account_owner TEXT,
+    account_branch TEXT,
+    account_desc TEXT,
+    balance NUMERIC,
+    credit_score INT,
+    account_type TEXT,
+    ifsc_code TEXT,
+    currency TEXT,
+    daily_limit NUMERIC,
+    monthly_limit NUMERIC,
+    upi_limit NUMERIC,
+    withdrawal_limit NUMERIC,
+    transfer_limit NUMERIC,
+    created_on TIMESTAMP,
+    last_updated TIMESTAMP,
+    is_account_locked BOOLEAN,
+    is_primary_account BOOLEAN,
+    is_loan BOOLEAN,
+    is_policy BOOLEAN,
+
+    CONSTRAINT fk_user
+        FOREIGN KEY (phone_no, email)
+        REFERENCES users (phone_no, email)
+        ON DELETE CASCADE
+);
+
+----------------------------------------------------------
+-- TRANSACTIONS TABLE (linked using account_no)
+----------------------------------------------------------
+CREATE TABLE transactions (
+    id SERIAL PRIMARY KEY,
+    account_no TEXT REFERENCES accounts(account_no) ON DELETE CASCADE,
+
+    name TEXT,
+    from_acc TEXT,
+    to_acc TEXT,
+    amount NUMERIC,
+    status TEXT,
+    transactions_id TEXT,
+    date DATE,
+    time TIME,
+    sender_details TEXT,
+    type TEXT,
+    method TEXT,
+    description TEXT,
+    reference_no TEXT,
+    category TEXT,
+    receipt_url TEXT,
+    is_flagged BOOLEAN,
+    created_at TIMESTAMP,
+    from_upi TEXT,
+    to_upi TEXT;
+);
+
+----------------------------------------------------------
+-- MY LOAN TABLE
+----------------------------------------------------------
+CREATE TABLE my_loan (
+    id SERIAL PRIMARY KEY,
+    account_no TEXT REFERENCES accounts(account_no) ON DELETE CASCADE,
+
+    loan_id TEXT,
+    loan_name TEXT,
+    loan_amount NUMERIC,
+    percentage_rate NUMERIC,
+    due_date DATE,
+    balance NUMERIC,
+    paid NUMERIC,
+    extras TEXT,
+    description TEXT,
+    loan_type TEXT,
+    emi_amount NUMERIC,
+    emi_due_day TEXT,
+    loan_status TEXT,
+    issued_date DATE,
+    documents JSONB,
+    is_defaulted BOOLEAN,
+    penalty_amount NUMERIC
+);
+
+----------------------------------------------------------
+-- AVAILABLE LOANS
+----------------------------------------------------------
+CREATE TABLE avail_loan (
+    id SERIAL PRIMARY KEY,
+    account_no TEXT REFERENCES accounts(account_no) ON DELETE CASCADE,
+
+    loan_id TEXT,
+    loan_name TEXT,
+    loan_amount NUMERIC,
+    percentage_rate NUMERIC,
+    due_date DATE,
+    balance NUMERIC,
+    paid NUMERIC,
+    extras TEXT,
+    description TEXT,
+    loan_type TEXT,
+    emi_amount NUMERIC
+);
+
+----------------------------------------------------------
+-- MY POLICY TABLE
+----------------------------------------------------------
+CREATE TABLE my_policy (
+    id SERIAL PRIMARY KEY,
+    account_no TEXT REFERENCES accounts(account_no) ON DELETE CASCADE,
+
+    policy_id TEXT,
+    policy_name TEXT,
+    description TEXT,
+    policy_type TEXT,
+    coverage_amount NUMERIC,
+    premium_amount NUMERIC,
+    renewal_date DATE,
+    policy_status TEXT,
+    issued_on DATE,
+    nominee_name TEXT,
+    nominee_relation TEXT
+);
+
+----------------------------------------------------------
+-- AVAILABLE POLICY TABLE
+----------------------------------------------------------
+CREATE TABLE avail_policy (
+    id SERIAL PRIMARY KEY,
+    account_no TEXT REFERENCES accounts(account_no) ON DELETE CASCADE,
+
+    policy_id TEXT,
+    policy_name TEXT,
+    description TEXT,
+    policy_type TEXT,
+    coverage_amount NUMERIC,
+    premium_amount NUMERIC
+);
+
+----------------------------------------------------------
+-- MY INSURANCE TABLE
+----------------------------------------------------------
+CREATE TABLE my_insurance (
+    id SERIAL PRIMARY KEY,
+    account_no TEXT REFERENCES accounts(account_no) ON DELETE CASCADE,
+
+    ins_id TEXT,
+    ins_name TEXT,
+    description TEXT,
+    insurance_type TEXT,
+    premium_due_day TEXT,
+    claim_status TEXT,
+    claim_history JSONB
+);
+
+----------------------------------------------------------
+-- AVAILABLE INSURANCE TABLE
+----------------------------------------------------------
+CREATE TABLE avail_insurance (
+    id SERIAL PRIMARY KEY,
+    account_no TEXT REFERENCES accounts(account_no) ON DELETE CASCADE,
+
+    ins_id TEXT,
+    ins_name TEXT,
+    description TEXT,
+    insurance_type TEXT,
+    premium_due_day TEXT
+);
+
+----------------------------------------------------------
+-- VERIFICATION TABLE
+----------------------------------------------------------
+CREATE TABLE verification (
+    id SERIAL PRIMARY KEY,
+    account_no TEXT REFERENCES accounts(account_no) ON DELETE CASCADE,
+
+    email BOOLEAN,
+    phone BOOLEAN,
+    face BOOLEAN,
+    voice BOOLEAN,
+    fingerprint BOOLEAN,
+    is_otp BOOLEAN,
+    kyc_status TEXT,
+    aadhaar_verified BOOLEAN,
+    pan_verified BOOLEAN,
+    last_verified_at TIMESTAMP,
+    login_attempts INT,
+    last_login TIMESTAMP
+);
+
+
+
+CREATE TABLE bank_items (
+    id SERIAL PRIMARY KEY,
+
+    -- Link to account
+    account_no TEXT NOT NULL REFERENCES accounts(account_no) ON DELETE CASCADE,
+
+    -- What type of item?
+    item_type TEXT NOT NULL CHECK (item_type IN (
+        'debit_card',
+        'credit_card',
+        'atm_card',
+        'passbook',
+        'cheque_book',
+        'virtual_card',
+        'international_card'
+    )),
+
+    -- Common fields for all items
+    issued_on DATE,
+    expires_on DATE,
+    status TEXT DEFAULT 'active',   -- active, blocked, expired, lost, replaced
+    remarks TEXT,
+
+    -- JSON data for item-specific details
+    meta JSONB, 
+    -- Example meta data based on item_type:
+    -- Debit card → { "card_number": "xxxx", "cvv": "123", "pin_set": true }
+    -- Cheque book → { "start_no": 1001, "end_no": 1020 }
+    -- Passbook → { "passbook_no": "PB0012", "pages_used": 12 }
+
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+
+
+-- AVAILABLE INVESTMENTS (What user can invest in)
+CREATE TABLE avail_investments (
+    id SERIAL PRIMARY KEY,
+    fund_id TEXT UNIQUE NOT NULL,
+    fund_name TEXT NOT NULL,
+    fund_house TEXT NOT NULL,
+    investment_type TEXT CHECK (investment_type IN ('Mutual Fund', 'Stocks', 'Fixed Deposit', 'Gold', 'SIP', 'Crypto')) NOT NULL,
+    min_investment NUMERIC(12,2) NOT NULL,
+    expected_returns TEXT, -- e.g. "12-18% p.a."
+    risk_level TEXT CHECK (risk_level IN ('Low', 'Medium', 'High')) NOT NULL,
+    lock_in_period TEXT, -- e.g. "3 years", "None"
+    description TEXT,
+    rating NUMERIC(2,1) CHECK (rating BETWEEN 1 AND 5),
+    category TEXT, -- Equity, Debt, Hybrid, Gold etc.
+    is_popular BOOLEAN DEFAULT false,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+
+-- MY INVESTMENTS TABLE (User's active investments)
+CREATE TABLE my_investments (
+    id SERIAL PRIMARY KEY,
+    account_no TEXT REFERENCES accounts(account_no) ON DELETE CASCADE,
+    investment_id TEXT UNIQUE NOT NULL,
+    fund_name TEXT NOT NULL,
+    fund_house TEXT,
+    investment_type TEXT CHECK (investment_type IN ('Mutual Fund', 'Stocks', 'Fixed Deposit', 'Gold', 'SIP', 'Crypto')) NOT NULL,
+    invested_amount NUMERIC(15,2) NOT NULL DEFAULT 0,
+    current_value NUMERIC(15,2) NOT NULL DEFAULT 0,
+    returns_percentage NUMERIC(5,2), -- e.g. 12.45
+    invested_on DATE NOT NULL DEFAULT CURRENT_DATE,
+    maturity_date DATE,
+    risk_level TEXT CHECK (risk_level IN ('Low', 'Medium', 'High')),
+    status TEXT DEFAULT 'Active' CHECK (status IN ('Active', 'Matured', 'Withdrawn')),
+    nav NUMERIC(10,4), -- Net Asset Value for mutual funds
+    units_held NUMERIC(15,6),
+    last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    notes TEXT
+);
+
+-- Index for performance
+CREATE INDEX idx_my_investments_account ON my_investments(account_no);
+CREATE INDEX idx_my_investments_type ON my_investments(investment_type);

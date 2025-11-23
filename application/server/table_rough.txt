@@ -1,0 +1,63 @@
+id
+serial_no
+name
+upi_id
+age
+gender
+language
+phone_no
+email
+password
+accounts: [
+    {
+        bank_name
+        account_details
+        account_owner
+        account_branch
+        account_desc
+        account_no
+        balance
+        credit_score
+        transactions: [
+            {
+                id, name, from, to, amount, status, transactions_id, date, time, sender_details, ...
+            },
+        ]
+        my_loan: [
+            {
+                id, loan_id, loan_name, loan_amount, percentage_rate, due_date, balance, paid, extras, desc, ...
+            },
+        ]
+        avail_loan: [
+            {
+                id, loan_id, loan_name, loan_amount, percentage_rate, due_date, balance, paid, extras, desc, ...
+            },
+        ],
+        my_policy: [
+            {
+                id, policy_id, policy_name, desc, ...
+            },
+        ]
+        avail_policy: [
+            {
+                id, policy_id, policy_name, desc, ...
+            },
+        ]
+        is_loan
+        is_policy
+        my_insurance: [
+            {
+                id, ins_id, ins_name, desc, ...
+            },
+        ]
+        avail_insurance: [
+            {
+                id, ins_id, ins_name, desc, ...
+            }
+        ]
+        verification: {
+            email, phone, face, voice, fingerprint, is_otp
+        }
+
+    }
+]
