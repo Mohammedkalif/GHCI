@@ -1,0 +1,7 @@
+{
+  "name": "client",
+  "displayName": "client",
+  "plugins": [
+    "expo-asset"
+  ]
+}
