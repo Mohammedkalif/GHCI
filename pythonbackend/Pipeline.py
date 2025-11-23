@@ -68,12 +68,12 @@ app = FastAPI(title="Unified API Server", version="1.0")
 
 # ============================================================
 # FACE VERIFICATION FROM UPLOADED FRAME
-# ============================================================
+# ============================================================ 
 @app.post("/face-verify-frame")
 async def face_verify_frame(file: UploadFile = File(...)):
 
     if CENTROID is None:
-        return {"verified": False, "similarity": 0.0, "error": "No registered user"}
+        return {"verified": False, "similarity": 0.0, "error": "No registered user"} 
 
     img_bytes = await file.read()
     npimg = np.frombuffer(img_bytes, np.uint8)
@@ -204,7 +204,7 @@ def model_predict(df_sup):
 
     return prob, flag, top_reasons
 
-
+ 
 @app.post("/predict")
 def predict(tx: TxInput):
     tx_dict = tx.dict()
